@@ -80,8 +80,6 @@ test_applyDefaultBuiltin =
         , test_applyBuiltinFunction TakeByteString
         , test_applyBuiltinFunction DropByteString
         , test_applyBuiltinFunction EqByteString
-        , test_applyBuiltinFunction EncodeUtf8
-        , test_applyBuiltinFunction DecodeUtf8
         , test_applyBuiltinFunction SHA2
         , test_applyBuiltinFunction SHA3
         ]
