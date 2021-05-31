@@ -18,6 +18,7 @@ module PlutusTx.Builtins (
                                 , sha2_256
                                 , sha3_256
                                 , verifySignature
+                                , decodeUtf8
                                 -- * Integer builtins
                                 , addInteger
                                 , subtractInteger
@@ -40,6 +41,7 @@ module PlutusTx.Builtins (
                                 , appendString
                                 , emptyString
                                 , charToString
+                                , encodeUtf8
                                 -- * Tracing
                                 , trace
                                 ) where
@@ -111,6 +113,10 @@ lessThanByteString = (<)
 -- | Check if one 'ByteString' is greater than another.
 greaterThanByteString :: ByteString -> ByteString -> Bool
 greaterThanByteString = (>)
+
+{-# NOINLINE decodeUtf8 #-}
+decodeUtf8 :: ByteString -> String
+decodeUtf8 = mustBeReplaced "decodeUtf8"
 
 {-# NOINLINE addInteger #-}
 -- | Add two 'Integer's.
@@ -219,3 +225,7 @@ charToString = mustBeReplaced "charToString"
 -- | Logs the given 'String' to the evaluation log.
 trace :: String -> ()
 trace _ = () --mustBeReplaced "trace"
+
+{-# NOINLINE encodeUtf8 #-}
+encodeUtf8 :: String -> ByteString
+encodeUtf8 = mustBeReplaced "encodeUtf8"

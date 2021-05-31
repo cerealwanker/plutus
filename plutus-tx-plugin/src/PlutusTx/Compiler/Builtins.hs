@@ -199,6 +199,8 @@ builtinNames = [
     , 'Builtins.appendString
     , 'Builtins.emptyString
     , 'Builtins.charToString
+    , 'Builtins.encodeUtf8
+    , 'Builtins.decodeUtf8
     , 'String.stringToBuiltinString
 
     , 'Builtins.trace
@@ -272,10 +274,12 @@ defineBuiltinTerms = do
     do
         term <- wrapRel bsTy 2 $ mkBuiltin PLC.GtByteString
         defineBuiltinTerm 'Builtins.greaterThanByteString term [bs, bool]
-
     do
         let term = PIR.mkConstant () BS.empty
         defineBuiltinTerm 'Builtins.emptyByteString term [bs]
+    do
+        let term = mkBuiltin PLC.DecodeUtf8
+        defineBuiltinTerm 'Builtins.decodeUtf8 term [bs]
 
     -- Integer builtins
     do
@@ -339,6 +343,9 @@ defineBuiltinTerms = do
     do
         term <- wrapUnitFun strTy $ mkBuiltin PLC.Trace
         defineBuiltinTerm 'Builtins.trace term [str, unit]
+    do
+        let term = mkBuiltin PLC.EncodeUtf8
+        defineBuiltinTerm 'Builtins.encodeUtf8 term [bs]
 
 defineBuiltinTypes
     :: CompilingDefault uni fun m

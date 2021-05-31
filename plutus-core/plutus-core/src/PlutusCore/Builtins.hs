@@ -27,6 +27,7 @@ import           Codec.Serialise
 import           Control.DeepSeq
 import           Crypto
 import qualified Data.ByteString                                as BS
+import qualified Data.ByteString.Char8                          as BSC
 import qualified Data.ByteString.Hash                           as Hash
 import           Data.Ix
 import           Data.Word                                      (Word8)
@@ -73,6 +74,8 @@ data DefaultFun
     | IfThenElse
     | CharToString
     | Append
+    | EncodeUtf8
+    | DecodeUtf8
     | Trace
     | Nop1  -- TODO. These are only used for costing calibration and shouldn't be included in the defaults.
     | Nop2
@@ -106,6 +109,8 @@ instance Pretty DefaultFun where
     pretty IfThenElse           = "ifThenElse"
     pretty CharToString         = "charToString"
     pretty Append               = "append"
+    pretty EncodeUtf8           = "encodeUtf8"
+    pretty DecodeUtf8           = "decodeUtf8"
     pretty Trace                = "trace"
     pretty Nop1                 = "nop1"
     pretty Nop2                 = "nop2"
@@ -219,6 +224,14 @@ instance (GShow uni, GEq uni, DefaultUni <: uni) => ToBuiltinMeaning uni Default
         makeBuiltinMeaning
             ((++) :: String -> String -> String)
             mempty  -- TODO: budget.
+    toBuiltinMeaning EncodeUtf8 =
+        makeBuiltinMeaning
+            (BSC.pack :: String -> BS.ByteString)
+            mempty  -- TODO: budget.
+    toBuiltinMeaning DecodeUtf8 =
+        makeBuiltinMeaning
+            (BSC.unpack :: BS.ByteString -> String)
+            mempty  -- TODO: budget.
     toBuiltinMeaning Trace =
         makeBuiltinMeaning
             (emit :: String -> Emitter ())
@@ -263,6 +276,8 @@ instance Serialise DefaultFun where
               IfThenElse           -> 21
               CharToString         -> 22
               Append               -> 23
+              EncodeUtf8           -> 29
+              DecodeUtf8           -> 30
               Trace                -> 24
               Nop1                 -> 25
               Nop2                 -> 26
@@ -339,6 +354,8 @@ instance Flat DefaultFun where
               IfThenElse           -> 21
               CharToString         -> 22
               Append               -> 23
+              EncodeUtf8           -> 29
+              DecodeUtf8           -> 30
               Trace                -> 24
               Nop1                 -> 25
               Nop2                 -> 26
@@ -369,6 +386,8 @@ instance Flat DefaultFun where
               go 21 = pure IfThenElse
               go 22 = pure CharToString
               go 23 = pure Append
+              go 29 = pure EncodeUtf8
+              go 30 = pure DecodeUtf8
               go 24 = pure Trace
               go 25 = pure Nop1
               go 26 = pure Nop2
