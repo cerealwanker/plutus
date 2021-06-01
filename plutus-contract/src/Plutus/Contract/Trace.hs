@@ -32,6 +32,7 @@ module Plutus.Contract.Trace
     -- * Handle blockchain events repeatedly
     , handleBlockchainQueries
     , handleSlotNotifications
+    , handleTimeNotifications
     -- * Initial distributions of emulated chains
     , InitialDistribution
     , defaultDist
@@ -57,11 +58,12 @@ import           Data.Text.Prettyprint.Doc                (Pretty, pretty, (<+>)
 import           GHC.Generics                             (Generic)
 
 import           Data.Text                                (Text)
-import           Plutus.Contract                          (HasAwaitSlot, HasTxConfirmation, HasUtxoAt, HasWatchAddress,
-                                                           HasWriteTx)
+import           Plutus.Contract                          (HasAwaitSlot, HasAwaitTime, HasTxConfirmation, HasUtxoAt,
+                                                           HasWatchAddress, HasWriteTx)
 import           Plutus.Contract.Schema                   (Event (..), Handlers (..))
 
 import qualified Plutus.Contract.Effects.AwaitSlot        as AwaitSlot
+import qualified Plutus.Contract.Effects.AwaitTime        as AwaitTime
 import           Plutus.Contract.Effects.AwaitTxConfirmed (TxConfirmed (..))
 import qualified Plutus.Contract.Effects.AwaitTxConfirmed as AwaitTxConfirmed
 import           Plutus.Contract.Effects.Instance         (HasOwnId)
@@ -130,6 +132,18 @@ handleSlotNotifications =
     maybeToHandler AwaitSlot.request
     >>> RequestHandler.handleSlotNotifications
     >>^ AwaitSlot.event
+
+handleTimeNotifications ::
+    ( HasAwaitTime s
+    , Member (LogObserve (LogMessage Text)) effs
+    , Member (LogMsg RequestHandlerLogMsg) effs
+    , Member WalletEffect effs
+    )
+    => RequestHandler effs (Handlers s) (Event s)
+handleTimeNotifications =
+    maybeToHandler AwaitTime.request
+    >>> RequestHandler.handleTimeNotifications
+    >>^ AwaitTime.event
 
 handleBlockchainQueries ::
     ( HasWriteTx s

@@ -22,10 +22,11 @@ import qualified Control.Monad.Freer.Extras.Log         as Log
 import           Test.Tasty
 
 import           Ledger                                 (Address, PubKey, Slot)
-import qualified Ledger                                 as Ledger
+import qualified Ledger
 import qualified Ledger.Ada                             as Ada
 import qualified Ledger.Constraints                     as Constraints
 import qualified Ledger.Crypto                          as Crypto
+import qualified Ledger.TimeSlot                        as TimeSlot
 import           Plutus.Contract                        as Con
 import           Plutus.Contract.Test
 import           Plutus.Contract.Types                  (ResumableResult (..))
@@ -35,13 +36,14 @@ import           Plutus.Trace.Emulator                  (ContractInstanceTag, Em
                                                          activeEndpoints, callEndpoint)
 import           Plutus.Trace.Emulator.Types            (ContractInstanceLog (..), ContractInstanceMsg (..),
                                                          ContractInstanceState (..), UserThreadMsg (..))
-import qualified PlutusTx                               as PlutusTx
+import qualified PlutusTx
 import           PlutusTx.Lattice
 import           Prelude                                hiding (not)
 import qualified Prelude                                as P
 import qualified Wallet.Emulator                        as EM
 
 import qualified Plutus.Contract.Effects.AwaitSlot      as AwaitSlot
+import qualified Plutus.Contract.Effects.AwaitTime      as AwaitTime
 import           Plutus.Contract.Effects.ExposeEndpoint (ActiveEndpoint (..))
 import           Plutus.Contract.Trace.RequestHandler   (maybeToHandler)
 
@@ -75,6 +77,21 @@ tests =
 
         , check 1 "watchAddressUntil" (void $ watchAddressUntil someAddress 5) $ \con ->
             (waitingForSlot con tag 5)
+
+        , check 1 "AwaitTime.awaitTime" (void $ AwaitTime.awaitTime $ TimeSlot.slotToPOSIXTime 10) $ \con ->
+            waitingForTime con tag $ TimeSlot.slotToPOSIXTime 10
+
+        , check 1 "AwaitTime.selectEither" (void $ selectEither (AwaitTime.awaitTime $ TimeSlot.slotToPOSIXTime 10) (AwaitTime.awaitTime $ TimeSlot.slotToPOSIXTime 5)) $ \con ->
+            waitingForTime con tag $ TimeSlot.slotToPOSIXTime 5
+
+        , check 1 "AwaitTime.until" (void $ AwaitTime.awaitTime (TimeSlot.slotToPOSIXTime 10) `AwaitTime.until` TimeSlot.slotToPOSIXTime 5) $ \con ->
+            waitingForTime con tag $ TimeSlot.slotToPOSIXTime 5
+
+        , check 1 "both" (void $ Con.both (AwaitTime.awaitTime $ TimeSlot.slotToPOSIXTime 10) (AwaitTime.awaitTime $ TimeSlot.slotToPOSIXTime 20)) $ \con ->
+            waitingForTime con tag $ TimeSlot.slotToPOSIXTime 10
+
+        , check 1 "both (2)" (void $ Con.both (AwaitTime.awaitTime $ TimeSlot.slotToPOSIXTime 10) (AwaitTime.awaitTime $ TimeSlot.slotToPOSIXTime 20)) $ \con ->
+            waitingForTime con tag $ TimeSlot.slotToPOSIXTime 20
 
         , check 1 "endpoint" (endpoint @"ep") $ \con ->
             (endpointAvailable @"ep" con tag)

@@ -47,6 +47,7 @@ module Plutus.Contract.Test(
     , walletFundsExactChange
     , walletPaidFees
     , waitingForSlot
+    , waitingForTime
     , walletWatchingAddress
     , valueAtAddress
     , dataAtAddress
@@ -102,6 +103,8 @@ import           Ledger.Constraints.OffChain            (UnbalancedTx)
 import           Ledger.Tx                              (Tx)
 import           Plutus.Contract.Effects.AwaitSlot      (SlotSymbol)
 import qualified Plutus.Contract.Effects.AwaitSlot      as AwaitSlot
+import           Plutus.Contract.Effects.AwaitTime      (TimeSymbol)
+import qualified Plutus.Contract.Effects.AwaitTime      as AwaitTime
 import qualified Plutus.Contract.Effects.ExposeEndpoint as Endpoints
 import qualified Plutus.Contract.Effects.UtxoAt         as UtxoAt
 import qualified Plutus.Contract.Effects.WatchAddress   as WatchAddress
@@ -119,6 +122,7 @@ import           Ledger.Generators                      (GeneratorModel, Mockcha
 import qualified Ledger.Generators                      as Gen
 import           Ledger.Index                           (ScriptValidationEvent, ValidationError)
 import           Ledger.Slot                            (Slot)
+import           Ledger.Time                            (POSIXTime)
 import           Ledger.Value                           (Value)
 import           Wallet.Emulator                        (EmulatorEvent, EmulatorTimeEvent)
 
@@ -396,6 +400,24 @@ waitingForSlot contract inst sl =
                 pure False
             _ -> pure True
 
+waitingForTime
+    :: forall w s e a.
+       ( HasType TimeSymbol AwaitTime.WaitingForTime (Output s)
+       , ContractConstraints s
+       , Monoid w
+       )
+    => Contract w s e a
+    -> ContractInstanceTag
+    -> POSIXTime
+    -> TracePredicate
+waitingForTime contract inst sl =
+    flip postMapM (Folds.instanceRequests contract inst) $ \rqs ->
+        case mapMaybe (\e -> AwaitTime.request e >>= guard . (==) sl) (rqRequest <$> rqs) of
+            [] -> do
+                tell @(Doc Void) $ pretty inst <+> "not waiting for any time notifications. Expected:" <+>  viaShow sl
+                pure False
+            _ -> pure True
+
 anyTx
     :: forall w s e a.
        ( HasWriteTx s
@@ -545,7 +567,7 @@ walletPaidFees w val =
     flip postMapM (L.generalize $ Folds.walletFees w) $ \fees -> do
         let result = fees == val
         unless result $ do
-            tell @(Doc Void) $ vsep $
+            tell @(Doc Void) $ vsep
                 [ "Expected" <+> pretty w <+> "to pay"
                 , " " <+> viaShow val
                 , "lovelace in fees, but they paid"
