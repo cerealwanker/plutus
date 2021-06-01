@@ -114,6 +114,10 @@
           (hsPkgs."exceptions" or (errorHandler.buildDepError "exceptions"))
           (hsPkgs."data-default" or (errorHandler.buildDepError "data-default"))
           (hsPkgs."time" or (errorHandler.buildDepError "time"))
+          (hsPkgs."beam-core" or (errorHandler.buildDepError "beam-core"))
+          (hsPkgs."beam-sqlite" or (errorHandler.buildDepError "beam-sqlite"))
+          (hsPkgs."beam-migrate" or (errorHandler.buildDepError "beam-migrate"))
+          (hsPkgs."sqlite-simple" or (errorHandler.buildDepError "sqlite-simple"))
           ];
         buildable = true;
         modules = [
@@ -155,6 +159,9 @@
           "Plutus/PAB/Core/ContractInstance/BlockchainEnv"
           "Plutus/PAB/Core/ContractInstance/RequestHandlers"
           "Plutus/PAB/Core/ContractInstance/STM"
+          "Plutus/PAB/Db/Beam"
+          "Plutus/PAB/Db/Beam/ContractStore"
+          "Plutus/PAB/Db/Beam/ContractDefinitionStore"
           "Plutus/PAB/Db/Eventful"
           "Plutus/PAB/Db/Eventful/Command"
           "Plutus/PAB/Db/Eventful/ContractDefinitionStore"
@@ -169,6 +176,7 @@
           "Plutus/PAB/Effects/ContractTest/AtomicSwap"
           "Plutus/PAB/Effects/ContractTest/PayToWallet"
           "Plutus/PAB/Effects/ContractTest/Uniswap"
+          "Plutus/PAB/Effects/DbStore"
           "Plutus/PAB/Effects/EventLog"
           "Plutus/PAB/Effects/UUID"
           "Plutus/PAB/Effects/TimeEffect"
