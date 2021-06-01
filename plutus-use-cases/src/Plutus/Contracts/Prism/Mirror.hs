@@ -59,6 +59,7 @@ mirror ::
     )
     => Contract w s MirrorError ()
 mirror = do
+    logInfo @String "mirror started"
     authority <- mapError SetupError $ CredentialAuthority . pubKeyHash <$> ownPubKey
     forever (createTokens authority `select` revokeToken authority)
 
@@ -69,7 +70,9 @@ createTokens ::
     => CredentialAuthority
     -> Contract w s MirrorError ()
 createTokens authority = do
+    logInfo @String "waiting for 'issue' call"
     CredentialOwnerReference{coTokenName, coOwner} <- mapError IssueEndpointError $ endpoint @"issue"
+    logInfo @String "Endpoint 'issue' called"
     let pk      = Credential.unCredentialAuthority authority
         lookups = Constraints.monetaryPolicy (Credential.policy authority)
                   <> Constraints.ownPubKeyHash pk
